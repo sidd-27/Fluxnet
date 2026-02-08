@@ -31,7 +31,6 @@ impl FluxTx {
     
     pub fn send(&mut self, packet: Packet) {
         // 1. Reclaim completed frames
-        // TODO: This should be done periodically or only when TX is full
         self.reclaim();
         
         // 2. Put on TX Ring
@@ -43,16 +42,11 @@ impl FluxTx {
             };
             
             unsafe { self.tx.write_at(idx, desc) };
-            self.tx.submit(idx);
+            self.tx.submit(idx.wrapping_add(1));
             
-            // Forget packet so it doesn't run Drop (which would return to Fill ring prematurely)
-            // But wait, our current Packet has NoOpDropper.
-            // If we had a real dropper, we MUST forget it here because ownership moves to Kernel.
-            // When Kernel is done, it goes to Completion Ring.
             std::mem::forget(packet);
         } else {
-            // Drop packet (return to fill) if TX full
-             drop(packet); 
+            drop(packet); 
         }
     }
     

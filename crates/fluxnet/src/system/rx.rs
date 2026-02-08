@@ -23,9 +23,22 @@ unsafe impl Send for FluxRx {}
 impl FluxRx {
     pub(crate) fn new(
         rx: ConsumerRing<XDPDesc>, rx_map: MmapArea,
-        fill: ProducerRing<u64>, fill_map: MmapArea,
+        mut fill: ProducerRing<u64>, fill_map: MmapArea,
         umem: Arc<UmemRegion>, fd: RawFd, shared_state: Arc<SharedFrameState>
     ) -> Self {
+        // Initialize Fill Ring with all available frames
+        let frame_count = umem.layout().frame_count;
+        let frame_size = umem.layout().frame_size;
+        
+        if let Some(mut prod) = fill.reserve(frame_count) {
+             for i in 0..frame_count {
+                 let addr = (i * frame_size) as u64;
+                 unsafe { fill.write_at(prod, addr) };
+                 prod += 1;
+             }
+             fill.submit(prod);
+        }
+
         Self { rx, rx_map, fill, fill_map, umem, fd, shared_state }
     }
     

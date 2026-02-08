@@ -56,6 +56,26 @@ impl<'a> PacketRef<'a> {
         self.len = len;
     }
 
+    /// Move the start of the packet buffer by `offset` bytes.
+    /// Positive offset shrinks the packet (strips header).
+    /// Negative offset expands the packet (adds header), assuming headroom exists.
+    #[inline]
+    pub fn adjust_head(&mut self, offset: isize) {
+        if offset > 0 {
+             let u_off = offset as usize;
+             if u_off <= self.len {
+                 unsafe { self.ptr = self.ptr.add(u_off) };
+                 self.len -= u_off;
+             } else {
+                 self.len = 0;
+             }
+        } else {
+             let u_off = (-offset) as usize;
+             unsafe { self.ptr = self.ptr.sub(u_off) };
+             self.len += u_off;
+        }
+    }
+
     #[inline]
     pub fn send(&mut self) {
         *self.action = Action::Tx;
@@ -83,6 +103,39 @@ impl<'a> PacketRef<'a> {
     pub fn ipv4(&self) -> Option<&fluxnet_proto::Ipv4Header> {
         let (_, payload) = fluxnet_proto::parse_eth(self.data())?;
         fluxnet_proto::parse_ipv4(payload).map(|(h, _)| h)
+    }
+
+    pub fn udp(&self) -> Option<&fluxnet_proto::UdpHeader> {
+        let (_, ip_payload) = fluxnet_proto::parse_eth(self.data())?;
+        let (ip_header, l4_payload) = fluxnet_proto::parse_ipv4(ip_payload)?;
+        
+        if ip_header.proto != 17 { // UDP
+            return None;
+        }
+        
+        fluxnet_proto::parse_udp(l4_payload).map(|(h, _)| h)
+    }
+
+    pub fn tcp(&self) -> Option<&fluxnet_proto::TcpHeader> {
+        let (_, ip_payload) = fluxnet_proto::parse_eth(self.data())?;
+        let (ip_header, l4_payload) = fluxnet_proto::parse_ipv4(ip_payload)?;
+        
+        if ip_header.proto != 6 { // TCP
+            return None;
+        }
+        
+        fluxnet_proto::parse_tcp(l4_payload).map(|(h, _)| h)
+    }
+
+    pub fn icmp(&self) -> Option<&fluxnet_proto::IcmpHeader> {
+        let (_, ip_payload) = fluxnet_proto::parse_eth(self.data())?;
+        let (ip_header, l4_payload) = fluxnet_proto::parse_ipv4(ip_payload)?;
+        
+        if ip_header.proto != 1 { // ICMP
+            return None;
+        }
+        
+        fluxnet_proto::parse_icmp(l4_payload).map(|(h, _)| h)
     }
 }
 

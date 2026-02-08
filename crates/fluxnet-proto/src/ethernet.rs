@@ -29,3 +29,29 @@ pub fn parse_eth(data: &[u8]) -> Option<(&EthHeader, &[u8])> {
     
     Some((header, payload))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_eth_parsing() {
+        let mut data = [0u8; 18];
+        data[0..6].copy_from_slice(&[0x01, 0x02, 0x03, 0x04, 0x05, 0x06]); // dst
+        data[6..12].copy_from_slice(&[0x11, 0x12, 0x13, 0x14, 0x15, 0x16]); // src
+        data[12..14].copy_from_slice(&0x0800u16.to_be_bytes()); // type (IPv4)
+        data[14..18].copy_from_slice(&[0xAA, 0xBB, 0xCC, 0xDD]); // payload
+
+        let (header, payload) = parse_eth(&data).expect("Should parse eth");
+        assert_eq!(header.dst, [0x01, 0x02, 0x03, 0x04, 0x05, 0x06]);
+        assert_eq!(header.src, [0x11, 0x12, 0x13, 0x14, 0x15, 0x16]);
+        assert_eq!(header.eth_type(), 0x0800);
+        assert_eq!(payload, &[0xAA, 0xBB, 0xCC, 0xDD]);
+    }
+
+    #[test]
+    fn test_eth_too_short() {
+        let data = [0u8; 13];
+        assert!(parse_eth(&data).is_none());
+    }
+}

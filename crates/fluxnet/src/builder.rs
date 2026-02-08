@@ -1,4 +1,6 @@
 use crate::raw::FluxRaw;
+use crate::config::Poller;
+use crate::engine::FluxEngine;
 use fluxnet_core::umem::layout::UmemLayout;
 use fluxnet_core::umem::mmap::UmemRegion;
 use fluxnet_core::sys::socket::{create_xsk_socket, bind_socket, set_umem_reg, set_ring_size, get_mmap_offsets, mmap_range};
@@ -13,6 +15,8 @@ pub struct FluxBuilder {
     queue_id: u32,
     frame_count: u32,
     frame_size: u32,
+    poller: Poller,
+    batch_size: usize,
 }
 
 impl FluxBuilder {
@@ -22,6 +26,8 @@ impl FluxBuilder {
             queue_id: 0,
             frame_count: 4096,
             frame_size: 2048,
+            poller: Poller::Adaptive,
+            batch_size: 64,
         }
     }
 
@@ -35,13 +41,34 @@ impl FluxBuilder {
         self
     }
 
+    pub fn poller(mut self, poller: Poller) -> Self {
+        self.poller = poller;
+        self
+    }
+
+    pub fn batch_size(mut self, size: usize) -> Self {
+        self.batch_size = size;
+        self
+    }
+
+    pub fn build_engine(self) -> Result<FluxEngine, std::io::Error> {
+        let poller = self.poller;
+        let batch_size = self.batch_size;
+        let raw = self.build_raw()?;
+        Ok(FluxEngine::with_config(raw, batch_size, poller))
+    }
+
     pub fn build_raw(self) -> Result<FluxRaw, std::io::Error> {
         // 1. Create UMEM
         let layout = UmemLayout::new(self.frame_size, self.frame_count);
-        let umem = UmemRegion::new(layout)?;
+        let mut umem = UmemRegion::new(layout)?;
         
         // 2. Create Socket
         let fd = create_xsk_socket()?;
+
+        // simulator: link umem to fd so they share same memory
+        #[cfg(not(target_os = "linux"))]
+        umem.set_fd(fd);
         
         // 3. Register UMEM
         // TODO: Handle headroom properly (currently 0)

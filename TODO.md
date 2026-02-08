@@ -14,13 +14,13 @@ This document outlines the remaining work required to bring `fluxnet` from its c
     -   Upgrade `windows_stubs.rs` to stateful mocks (simulating kernel rings and UMEM).
     -   Add `fluxnet::simulator` module (test-only) to inject/inspect packets.
     -   Enable functional `FluxEngine` tests on Windows.
-- [ ] **Poller Implementation**:
+- [x] **Poller Implementation**:
     -   Implement the `Adaptive` polling strategy in `FluxEngine::run`.
     -   Support `BusyPoll` (spin-loop) and `Syscall` (wait_for_rx) modes.
-- [ ] **Async Runtime Integration (Reactor)**:
+- [x] **Async Runtime Integration (Reactor)**:
     -   Implement `AsyncFluxRaw` using `tokio::io::unix::AsyncFd`.
     -   Add `recv_async` and `send_async` to `FluxRx`/`FluxTx` for non-blocking integration.
-- [ ] **RSS / Multi-Queue Support**:
+- [x] **RSS / Multi-Queue Support**:
     -   Verify `FluxBuilder::queue_id` correctly binds to specific hardware queues.
     -   Add support for configuring RSS (Receive Side Scaling) via eBPF maps if needed.
 - [ ] **FluxRaw "Bare Metal" Mode**:
@@ -29,12 +29,12 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 
 ## 2. Protocol Support (P2)
 
-- [ ] **L4 Protocols**:
+- [x] **L4 Protocols**:
     -   Implement `UdpHeader` and `TcpHeader` parsing/serializing in `fluxnet-proto`.
     -   Add `checksum()` validation methods.
-- [ ] **ICMP Support**:
+- [x] **ICMP Support**:
     -   Add basic ICMP parsing for ping/traceroute utilities.
-- [ ] **Zero-Copy Mutators**:
+- [x] **Zero-Copy Mutators**:
     -   Ensure `PacketRef` has methods like `adjust_head(offset)` to strip/add VLAN tags without copying.
 
 ## 3. Testing & Verification (P3)

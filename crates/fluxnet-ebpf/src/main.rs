@@ -5,8 +5,11 @@ use aya_ebpf::{
     bindings::xdp_action,
     macros::{xdp, map},
     programs::XdpContext,
+    maps::XskMap,
 };
-use aya_log_ebpf::info;
+
+#[map]
+static XSK_MAP: XskMap = XskMap::with_max_entries(64, 0);
 
 #[xdp]
 pub fn fluxnet(ctx: XdpContext) -> u32 {
@@ -17,7 +20,13 @@ pub fn fluxnet(ctx: XdpContext) -> u32 {
 }
 
 fn try_fluxnet(ctx: XdpContext) -> Result<u32, u32> {
-    info!(&ctx, "received a packet");
+    let queue_id = ctx.queue_id();
+    
+    // Redirect to XSK socket bound to this queue
+    if XSK_MAP.redirect(queue_id, 0).is_ok() {
+         return Ok(xdp_action::XDP_REDIRECT);
+    }
+
     Ok(xdp_action::XDP_PASS)
 }
 

@@ -6,6 +6,7 @@ edition = "2021"
 [features]
 default = []
 simulator = []
+async = ["tokio"]
 
 [dependencies]
 fluxnet-core = { path = "../fluxnet-core" }
@@ -13,3 +14,7 @@ fluxnet-proto = { path = "../fluxnet-proto" }
 thiserror = "2.0.18"
 crossbeam-queue = "0.3"
 lazy_static = "1.4.0"
+tokio = { version = "1.43.0", features = ["full"], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.43.0", features = ["full"] }

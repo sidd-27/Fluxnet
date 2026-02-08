@@ -25,6 +25,13 @@ impl Ipv4Header {
     pub fn header_len(&self) -> usize {
         (self.ihl() as usize) * 4
     }
+
+    pub fn is_valid(&self) -> bool {
+         let len = self.header_len();
+         let ptr = self as *const Ipv4Header as *const u8;
+         let slice = unsafe { std::slice::from_raw_parts(ptr, len) };
+         crate::checksum(slice) == 0
+    }
 }
 
 pub fn parse_ipv4(data: &[u8]) -> Option<(&Ipv4Header, &[u8])> {
@@ -42,4 +49,44 @@ pub fn parse_ipv4(data: &[u8]) -> Option<(&Ipv4Header, &[u8])> {
 
     let payload = &data[header_len..];
     Some((header, payload))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ipv4_parsing() {
+        let mut data = [0u8; 24];
+        data[0] = 0x45; // Version 4, IHL 5 (20 bytes)
+        data[2..4].copy_from_slice(&24u16.to_be_bytes()); // Total length
+        data[9] = 17; // Protocol UDP
+        data[10..12].copy_from_slice(&0x0000u16.to_be_bytes()); // Placeholder checksum
+        data[12..16].copy_from_slice(&[192, 168, 1, 1]); // src
+        data[16..20].copy_from_slice(&[192, 168, 1, 100]); // dst
+        data[20..24].copy_from_slice(&[0x11, 0x22, 0x33, 0x44]); // payload
+
+        // Fix checksum
+        let csum = crate::checksum(&data[0..20]);
+        data[10..12].copy_from_slice(&csum.to_be_bytes());
+
+        let (header, payload) = parse_ipv4(&data).expect("Should parse ipv4");
+        assert_eq!(header.version(), 4);
+        assert_eq!(header.ihl(), 5);
+        assert_eq!(header.header_len(), 20);
+        assert_eq!(header.proto, 17);
+        assert!(header.is_valid());
+        assert_eq!(payload, &[0x11, 0x22, 0x33, 0x44]);
+    }
+
+    #[test]
+    fn test_ipv4_with_options() {
+        let mut data = [0u8; 28];
+        data[0] = 0x47; // Version 4, IHL 7 (28 bytes)
+        data[2..4].copy_from_slice(&28u16.to_be_bytes());
+        
+        let (header, payload) = parse_ipv4(&data).expect("Should parse ipv4");
+        assert_eq!(header.header_len(), 28);
+        assert_eq!(payload.len(), 0);
+    }
 }

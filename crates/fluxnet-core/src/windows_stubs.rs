@@ -13,27 +13,33 @@ lazy_static! {
 
 pub struct MockSocketState {
     // Ring Buffers (Actual memory backing the "mmap")
-    pub rx_ring: Vec<u8>,
-    pub tx_ring: Vec<u8>,
-    pub fill_ring: Vec<u8>,
-    pub comp_ring: Vec<u8>,
+    pub rx_ring: Box<[u8]>,
+    pub tx_ring: Box<[u8]>,
+    pub fill_ring: Box<[u8]>,
+    pub comp_ring: Box<[u8]>,
     
     // UMEM Buffer
     pub umem: Vec<u8>,
+
+    // Binding info
+    pub if_index: u32,
+    pub queue_id: u32,
 }
 
 impl MockSocketState {
     pub fn new(size: usize) -> Self {
         // Simple layout: Producer (4) + Consumer (4) + Desc (size * desc_size)
-        // We ensure enough space for max size (e.g. 2048 * 32 bytes)
+        // We ensure enough space for max size (e.g. 4096 * 32 bytes)
         let ring_bytes = 4 + 4 + (size * 32); 
         
         Self {
-            rx_ring: vec![0u8; ring_bytes],
-            tx_ring: vec![0u8; ring_bytes],
-            fill_ring: vec![0u8; ring_bytes],
-            comp_ring: vec![0u8; ring_bytes],
+            rx_ring: vec![0u8; ring_bytes].into_boxed_slice(),
+            tx_ring: vec![0u8; ring_bytes].into_boxed_slice(),
+            fill_ring: vec![0u8; ring_bytes].into_boxed_slice(),
+            comp_ring: vec![0u8; ring_bytes].into_boxed_slice(),
             umem: Vec::new(), 
+            if_index: 0,
+            queue_id: 0,
         }
     }
 }
@@ -59,14 +65,23 @@ pub mod sys {
             Ok(fd as RawHandle)
         }
         
-        pub fn bind_socket(_fd: RawFd, _ifindex: u32, _queue_id: u32, _shared: bool) -> io::Result<()> {
-            Ok(())
+        pub fn bind_socket(fd: RawFd, ifindex: u32, queue_id: u32, _shared: bool) -> io::Result<()> {
+            let fd_idx = fd as usize;
+            let mut sockets = SOCKETS.lock().unwrap();
+            if let Some(sock) = sockets.get_mut(&fd_idx) {
+                sock.if_index = ifindex;
+                sock.queue_id = queue_id;
+                Ok(())
+            } else {
+                Err(io::Error::new(io::ErrorKind::NotFound, "socket not found"))
+            }
         }
         
-        pub fn set_umem_reg(fd: RawFd, _umem_addr: u64, _len: u64, _chunk_size: u32, _headroom: u32) -> io::Result<()> {
+        pub fn set_umem_reg(fd: RawFd, _umem_addr: u64, len: u64, _chunk_size: u32, _headroom: u32) -> io::Result<()> {
             let fd_idx = fd as usize;
-            let sockets = SOCKETS.lock().unwrap();
-            if sockets.contains_key(&fd_idx) {
+            let mut sockets = SOCKETS.lock().unwrap();
+            if let Some(sock) = sockets.get_mut(&fd_idx) {
+                sock.umem.resize(len as usize, 0);
                 Ok(())
             } else {
                 Err(io::Error::new(io::ErrorKind::NotFound, "socket not found"))
@@ -196,10 +211,13 @@ pub mod umem {
     pub mod mmap {
         use super::layout::UmemLayout;
         use std::io;
-        
+        use crate::windows_stubs::SOCKETS;
+        use std::os::windows::io::RawHandle;
+
         pub struct UmemRegion {
             ptr: *mut u8,
             layout: UmemLayout,
+            fd: Option<RawHandle>,
         }
         unsafe impl Send for UmemRegion {}
         unsafe impl Sync for UmemRegion {}
@@ -209,9 +227,27 @@ pub mod umem {
                  let len = layout.size();
                  let layout_alloc = std::alloc::Layout::from_size_align(len, 4096).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid layout"))?;
                  let ptr = unsafe { std::alloc::alloc_zeroed(layout_alloc) };
-                 Ok(Self { ptr, layout })
+                 Ok(Self { ptr, layout, fd: None })
             }
-            pub fn as_ptr(&self) -> *mut u8 { self.ptr }
+
+            pub fn set_fd(&mut self, fd: RawHandle) {
+                self.fd = Some(fd);
+            }
+
+            pub fn as_ptr(&self) -> *mut u8 { 
+                if let Some(fd) = self.fd {
+                    let fd_idx = fd as usize;
+                    let mut sockets = SOCKETS.lock().unwrap();
+                    if let Some(sock) = sockets.get_mut(&fd_idx) {
+                        // Ensure mock umem is large enough
+                        if sock.umem.len() < self.layout.size() {
+                            sock.umem.resize(self.layout.size(), 0);
+                        }
+                        return sock.umem.as_mut_ptr();
+                    }
+                }
+                self.ptr 
+            }
             pub fn len(&self) -> usize { self.layout.size() }
             pub fn layout(&self) -> UmemLayout { self.layout }
         }

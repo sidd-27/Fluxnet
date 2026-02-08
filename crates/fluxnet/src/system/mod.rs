@@ -1,13 +1,17 @@
 pub mod rx;
 pub mod tx;
 pub mod shared;
+#[cfg(feature = "async")]
+pub mod reactor;
 
 pub use rx::FluxRx;
 pub use tx::FluxTx;
+#[cfg(feature = "async")]
+pub use reactor::{AsyncFluxRx, AsyncFluxTx};
 
 use crate::raw::FluxRaw;
 use std::sync::Arc;
-
+use std::io;
 
 pub fn split(socket: FluxRaw) -> (FluxRx, FluxTx) {
     let fd = socket.fd();
@@ -19,4 +23,10 @@ pub fn split(socket: FluxRaw) -> (FluxRx, FluxTx) {
     let tx = FluxTx::new(socket.tx, socket.tx_map, socket.comp, socket.comp_map, umem, fd);
     
     (rx, tx)
+}
+
+#[cfg(feature = "async")]
+pub fn split_async(socket: FluxRaw) -> io::Result<(AsyncFluxRx, AsyncFluxTx)> {
+    let (rx, tx) = split(socket);
+    Ok((AsyncFluxRx::new(rx)?, AsyncFluxTx::new(tx)?))
 }
