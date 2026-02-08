@@ -7,9 +7,6 @@ use fluxcapacitor_core::sys::socket::{create_xsk_socket, bind_socket, set_umem_r
 use fluxcapacitor_core::sys::if_xdp::{XDP_UMEM_FILL_RING, XDP_UMEM_COMPLETION_RING, XDP_RX_RING, XDP_TX_RING, XDP_UMEM_PGOFF_FILL_RING, XDP_UMEM_PGOFF_COMPLETION_RING, XDP_PGOFF_RX_RING, XDP_PGOFF_TX_RING};
 use fluxcapacitor_core::ring::{ProducerRing, ConsumerRing, XDPDesc};
 
-// Note: Real implementation would need full binding logic here.
-// For now we just scaffold the builder.
-
 pub struct FluxBuilder {
     interface: String,
     queue_id: u32,
@@ -18,6 +15,7 @@ pub struct FluxBuilder {
     poller: Poller,
     batch_size: usize,
     bind_flags: u16,
+    load_xdp: bool,
 }
 
 impl FluxBuilder {
@@ -30,6 +28,7 @@ impl FluxBuilder {
             poller: Poller::Adaptive,
             batch_size: 64,
             bind_flags: 0,
+            load_xdp: false,
         }
     }
 
@@ -58,6 +57,11 @@ impl FluxBuilder {
         self
     }
 
+    pub fn load_xdp(mut self, load: bool) -> Self {
+        self.load_xdp = load;
+        self
+    }
+
     pub fn build_engine(self) -> Result<FluxEngine, std::io::Error> {
         let poller = self.poller;
         let batch_size = self.batch_size;
@@ -78,7 +82,6 @@ impl FluxBuilder {
         umem.set_fd(fd);
         
         // 3. Register UMEM
-        // TODO: Handle headroom properly (currently 0)
         let headroom = 0;
         set_umem_reg(fd, umem.as_ptr() as u64, umem.len() as u64, self.frame_size, headroom)?;
         
@@ -138,16 +141,65 @@ impl FluxBuilder {
         
         // 6. Bind (if interface provided)
         let if_index = fluxcapacitor_core::sys::utils::if_nametoindex(&self.interface)?;
-        
         bind_socket(fd, if_index, self.queue_id, self.bind_flags)?;
+
+        #[cfg(target_os = "linux")]
+        let mut bpf_handle = None;
+
+        #[cfg(target_os = "linux")]
+        if self.load_xdp {
+             use aya::Bpf;
+             use aya::programs::{Xdp, XdpFlags};
+             use aya::maps::XskMap;
+
+             let bpf_path = find_bpf_program_internal().ok_or_else(|| {
+                 std::io::Error::new(std::io::ErrorKind::NotFound, "eBPF object not found")
+             })?;
+
+             let mut bpf = Bpf::load_file(bpf_path).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+             let program: &mut Xdp = bpf.program_mut("fluxcapacitor").ok_or_else(|| {
+                 std::io::Error::new(std::io::ErrorKind::NotFound, "XDP program 'fluxcapacitor' not found")
+             })?.try_into().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+             
+             program.load().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+             program.attach(&self.interface, XdpFlags::default()).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+             let mut xsk_map: XskMap<_> = bpf.map_mut("XSK_MAP").ok_or_else(|| {
+                 std::io::Error::new(std::io::ErrorKind::NotFound, "XSK_MAP not found")
+             })?.try_into().map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+             xsk_map.set(self.queue_id, fd, 0).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))?;
+
+             bpf_handle = Some(bpf);
+        }
  
-        Ok(FluxRaw::new(
+        let mut raw = FluxRaw::new(
             umem, 
             rx, rx_map, 
             fill, fill_map, 
             tx, tx_map, 
             comp, comp_map, 
             fd
-        ))
+        );
+
+        #[cfg(target_os = "linux")]
+        {
+            raw.bpf = bpf_handle;
+        }
+
+        Ok(raw)
     }
+}
+
+#[cfg(target_os = "linux")]
+fn find_bpf_program_internal() -> Option<std::path::PathBuf> {
+    let target_dir = std::path::Path::new("target");
+    if !target_dir.exists() { return None; }
+    
+    for entry in walkdir::WalkDir::new(target_dir).into_iter().filter_map(|e| e.ok()) {
+        if entry.path().to_string_lossy().ends_with("bpfel-unknown-none/release/fluxcapacitor") {
+            return Some(entry.path().to_path_buf());
+        }
+    }
+    None
 }

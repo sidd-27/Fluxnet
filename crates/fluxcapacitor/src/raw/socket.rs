@@ -14,6 +14,8 @@ pub struct FluxRaw {
     pub comp: ConsumerRing<u64>,
     pub comp_map: MmapArea,
     fd: RawFd,
+    #[cfg(target_os = "linux")]
+    pub bpf: Option<aya::Bpf>,
 }
 
 impl FluxRaw {
@@ -32,6 +34,8 @@ impl FluxRaw {
             tx, tx_map,
             comp, comp_map,
             fd,
+            #[cfg(target_os = "linux")]
+            bpf: None,
         }
     }
     

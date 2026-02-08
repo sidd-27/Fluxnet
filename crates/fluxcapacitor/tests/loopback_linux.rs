@@ -5,7 +5,7 @@ mod linux_loopback {
     use fluxcapacitor_core::ring::XDPDesc;
     use std::thread;
     use std::time::Duration;
-    use std::sync::atomic::{ordering, AtomicU32};
+    use std::sync::atomic::{Ordering, AtomicU32};
 
     // XDP_FLAGS_SKB_MODE = 1 << 1 = 2
     const XDP_FLAGS_SKB_MODE: u16 = 2;
@@ -19,13 +19,13 @@ mod linux_loopback {
         let rx_builder = FluxBuilder::new("veth1")
             .queue_id(0)
             .bind_flags(XDP_FLAGS_SKB_MODE)
-            .umem_pages(16);
+            .umem_pages(16)
+            .load_xdp(true);
             
         let mut rx_raw = match rx_builder.build_raw() {
             Ok(r) => r,
             Err(e) => {
-                eprintln!("Failed to bind to veth1: {}. Make sure veth interfaces exist (run scripts/setup_veth.sh) and you have root/CAP_NET_RAW.", e);
-                return; // Skip test cleanly
+                panic!("Failed to bind to veth1: {}. Make sure veth interfaces exist (run scripts/setup_veth.sh) and you have root/CAP_NET_RAW.", e);
             }
         };
         

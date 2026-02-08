@@ -28,6 +28,14 @@ impl<'a> PacketBatch<'a> {
             idx: 0,
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.descriptors.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.descriptors.is_empty()
+    }
 }
 
 pub struct BatchIterator<'a> {

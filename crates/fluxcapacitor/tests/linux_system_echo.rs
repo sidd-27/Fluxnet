@@ -16,11 +16,12 @@ mod linux_system_echo {
         let server_builder = FluxBuilder::new("veth1")
             .queue_id(0)
             .bind_flags(XDP_FLAGS_SKB_MODE)
-            .umem_pages(16);
+            .umem_pages(16)
+            .load_xdp(true);
             
         let server_raw = match server_builder.build_raw() {
             Ok(r) => r,
-            Err(_) => return,
+            Err(e) => panic!("Failed to build raw on veth1: {}", e),
         };
         
         let (mut server_rx, mut server_tx) = split(server_raw);

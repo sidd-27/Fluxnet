@@ -14,7 +14,9 @@ fluxcapacitor-proto = { path = "../fluxcapacitor-proto" }
 thiserror = "2.0.18"
 crossbeam-queue = "0.3"
 lazy_static = "1.4.0"
+walkdir = "2.3"
 tokio = { version = "1.43.0", features = ["full"], optional = true }
+aya = "0.13"
 
 [dev-dependencies]
 tokio = { version = "1.43.0", features = ["full"] }

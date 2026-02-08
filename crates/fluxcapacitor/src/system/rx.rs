@@ -95,7 +95,7 @@ impl FluxRx {
             packets.push(packet);
         }
         
-        self.rx.release(count);
+        self.rx.release(count as u32);
         
         packets
     }

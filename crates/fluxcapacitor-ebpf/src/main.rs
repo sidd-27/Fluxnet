@@ -20,7 +20,7 @@ pub fn fluxcapacitor(ctx: XdpContext) -> u32 {
 }
 
 fn try_fluxcapacitor(ctx: XdpContext) -> Result<u32, u32> {
-    let queue_id = ctx.queue_id();
+    let queue_id = unsafe { (*ctx.ctx).rx_queue_index };
     
     // Redirect to XSK socket bound to this queue
     if XSK_MAP.redirect(queue_id, 0).is_ok() {
@@ -30,6 +30,7 @@ fn try_fluxcapacitor(ctx: XdpContext) -> Result<u32, u32> {
     Ok(xdp_action::XDP_PASS)
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
     unsafe { core::hint::unreachable_unchecked() }

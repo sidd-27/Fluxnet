@@ -15,8 +15,8 @@ mod tests {
         // 2. Test Split (Resource Ownership Transfer)
         let (rx, tx) = split(flux_raw);
         
-        // 3. Test fd access (Simulator returns mock FD, so not null)
-        assert_eq!(rx.fd().is_null(), false);
+        // 3. Test fd access
+        assert!(rx.fd() >= 0);
         
         // 4. Test Drop (Resource Cleanup)
         // Explicitly drop to verify no panic in MmapArea::drop

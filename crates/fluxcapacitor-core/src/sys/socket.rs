@@ -1,9 +1,9 @@
 use std::io;
-use std::os::unix::io::RawFd;
+pub use std::os::unix::io::RawFd;
 use std::mem;
 use libc::{
-    socket, bind, setsockopt, mmap, munmap, sendto, poll, pollfd,
-    AF_XDP, SOCK_RAW, SOL_XDP, SOL_SOCKET,
+    socket, bind, setsockopt, mmap, sendto, poll, pollfd,
+    AF_XDP, SOCK_RAW, SOL_XDP,
     PROT_READ, PROT_WRITE, MAP_SHARED, MAP_POPULATE,
     MSG_DONTWAIT, POLLIN,
     sockaddr, socklen_t, c_void,

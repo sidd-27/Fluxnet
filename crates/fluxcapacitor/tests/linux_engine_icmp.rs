@@ -18,11 +18,12 @@ mod linux_engine_icmp {
         let rx_builder = FluxBuilder::new("veth1")
             .queue_id(0)
             .bind_flags(XDP_FLAGS_SKB_MODE)
-            .umem_pages(16);
+            .umem_pages(16)
+            .load_xdp(true);
             
         let mut engine = match rx_builder.build_engine() {
             Ok(e) => e,
-            Err(_) => return, // Skip if no veth
+            Err(e) => panic!("Failed to build engine on veth1: {}", e),
         };
 
         let found_icmp = Arc::new(AtomicBool::new(false));
@@ -32,11 +33,14 @@ mod linux_engine_icmp {
 
         let engine_thread = thread::spawn(move || {
             engine.run(&stop_clone, |batch| {
-                for packet in batch.iter_mut() {
+                if !batch.is_empty() {
+                    println!("Received {} packets", batch.len());
+                }
+                for mut packet in batch.iter_mut() {
                     // Check if it's our ICMP packet
                     // We can use the helper methods if they work, or check raw bytes
                     if let Some(icmp) = packet.icmp() {
-                        if icmp.icmp_type == 8 { // Echo Request
+                        if icmp.kind == 8 { // Echo Request
                             found_clone.store(true, Ordering::Relaxed);
                             packet.drop(); // Done with it
                         }
@@ -92,7 +96,7 @@ mod linux_engine_icmp {
         tx_raw.wakeup_tx().unwrap();
 
         // 3. Wait for detection
-        thread::sleep(Duration::from_millis(100));
+        thread::sleep(Duration::from_millis(500));
         
         stop_signal.store(true, Ordering::Relaxed);
         let _ = engine_thread.join();

@@ -14,7 +14,6 @@ pub struct FluxTx {
     comp_map: MmapArea,
     #[allow(dead_code)]
     umem: Arc<UmemRegion>,
-    #[allow(dead_code)]
     fd: RawFd,
 }
 
@@ -27,6 +26,10 @@ impl FluxTx {
         umem: Arc<UmemRegion>, fd: RawFd
     ) -> Self {
         Self { tx, tx_map, comp, comp_map, umem, fd }
+    }
+
+    pub fn fd(&self) -> RawFd {
+        self.fd
     }
     
     pub fn send(&mut self, packet: Packet) {
