@@ -1,0 +1,66 @@
+use fluxnet_core::sys::mmap::MmapArea;
+use fluxnet_core::umem::mmap::UmemRegion;
+use fluxnet_core::ring::{ConsumerRing, ProducerRing, XDPDesc};
+use fluxnet_core::sys::socket::RawFd;
+
+pub struct FluxRaw {
+    pub umem: UmemRegion,
+    pub rx: ConsumerRing<XDPDesc>,
+    pub rx_map: MmapArea,
+    pub fill: ProducerRing<u64>,
+    pub fill_map: MmapArea,
+    pub tx: ProducerRing<XDPDesc>,
+    pub tx_map: MmapArea,
+    pub comp: ConsumerRing<u64>,
+    pub comp_map: MmapArea,
+    fd: RawFd,
+}
+
+impl FluxRaw {
+    pub fn new(
+        umem: UmemRegion, 
+        rx: ConsumerRing<XDPDesc>, rx_map: MmapArea,
+        fill: ProducerRing<u64>, fill_map: MmapArea,
+        tx: ProducerRing<XDPDesc>, tx_map: MmapArea,
+        comp: ConsumerRing<u64>, comp_map: MmapArea,
+        fd: RawFd
+    ) -> Self {
+        Self {
+            umem,
+            rx, rx_map,
+            fill, fill_map,
+            tx, tx_map,
+            comp, comp_map,
+            fd,
+        }
+    }
+    
+    pub fn fd(&self) -> RawFd {
+        self.fd
+    }
+
+    pub fn needs_wakeup_rx(&self) -> bool {
+        // TODO: check flags
+        false
+    }
+    
+    pub fn wakeup_rx(&self) -> std::io::Result<()> {
+        // TODO: syscall
+        Ok(())
+    }
+    
+    pub fn needs_wakeup_tx(&self) -> bool {
+         // TODO: check flags
+         false
+    }
+    
+    pub fn wakeup_tx(&self) -> std::io::Result<()> {
+        // TODO: syscall
+        Ok(())
+    }
+}
+
+// Safety: We assert that FluxRaw is safe to send between threads.
+// In the simulator, the global socket state is protected by a Mutex.
+// The RawFd is just an integer index (cast to pointer).
+unsafe impl Send for FluxRaw {}

@@ -1,0 +1,15 @@
+[package]
+name = "fluxnet-core"
+version = "0.1.0"
+edition = "2021"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+aya = "0.13"
+libc = "0.2"
+memmap2 = "0.9"
+
+[build-dependencies]
+aya-build = "0.1"
+
+[dependencies]
+lazy_static = "1.5.0"

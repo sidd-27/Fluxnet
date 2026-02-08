@@ -1,0 +1,15 @@
+[package]
+name = "fluxnet"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+simulator = []
+
+[dependencies]
+fluxnet-core = { path = "../fluxnet-core" }
+fluxnet-proto = { path = "../fluxnet-proto" }
+thiserror = "2.0.18"
+crossbeam-queue = "0.3"
+lazy_static = "1.4.0"

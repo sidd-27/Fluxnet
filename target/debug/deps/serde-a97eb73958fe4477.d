@@ -1,0 +1,14 @@
+C:\Users\KETAN\Desktop\antigravity stuff\Fluxnet\target\debug\deps\serde-a97eb73958fe4477.d: C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\KETAN\Desktop\antigravity\ stuff\Fluxnet\target\debug\build\serde-2376c92227c65148\out/private.rs
+
+C:\Users\KETAN\Desktop\antigravity stuff\Fluxnet\target\debug\deps\libserde-a97eb73958fe4477.rlib: C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\KETAN\Desktop\antigravity\ stuff\Fluxnet\target\debug\build\serde-2376c92227c65148\out/private.rs
+
+C:\Users\KETAN\Desktop\antigravity stuff\Fluxnet\target\debug\deps\libserde-a97eb73958fe4477.rmeta: C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\KETAN\Desktop\antigravity\ stuff\Fluxnet\target\debug\build\serde-2376c92227c65148\out/private.rs
+
+C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\KETAN\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+C:\Users\KETAN\Desktop\antigravity\ stuff\Fluxnet\target\debug\build\serde-2376c92227c65148\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\KETAN\\Desktop\\antigravity stuff\\Fluxnet\\target\\debug\\build\\serde-2376c92227c65148\\out
