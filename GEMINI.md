@@ -1,12 +1,12 @@
-# Fluxnet: Project Context & Architecture
+# Fluxcapacitor: Project Context & Architecture
 
-Fluxnet is a high-performance Linux AF_XDP (XDP sockets) library written in Rust. It provides a safe, idiomatic, and zero-copy interface for kernel-bypass networking, rivaling DPDK performance while leveraging Rust's safety and modern concurrency primitives.
+fluxcapacitor is a high-performance Linux AF_XDP (XDP sockets) library written in Rust. It provides a safe, idiomatic, and zero-copy interface for kernel-bypass networking, rivaling DPDK performance while leveraging Rust's safety and modern concurrency primitives.
 
 ## 1. Project Structure
 
 The project is organized as a Cargo Workspace:
 
-### `crates/fluxnet` (The User Interface)
+### `crates/fluxcapacitor` (The User Interface)
 - **Role:** High-level, safe developer API.
 - **Key Modules:**
     - `builder`: Fluent API (`FluxBuilder`) for socket configuration.
@@ -15,7 +15,7 @@ The project is organized as a Cargo Workspace:
     - `raw`: Mode C (Bare metal). Direct access to ring primitives with safety guardrails.
     - `packet`: Safe abstractions for UMEM frames (`PacketRef` and `Packet`).
 
-### `crates/fluxnet-core` (The Hardware Abstraction Layer)
+### `crates/fluxcapacitor-core` (The Hardware Abstraction Layer)
 - **Role:** Low-level FFI, memory management, and ring buffer primitives.
 - **Key Modules:**
     - `sys`: Raw Linux AF_XDP syscalls and C-binding offsets.
@@ -23,19 +23,19 @@ The project is organized as a Cargo Workspace:
     - `ring`: Type-safe `ProducerRing` and `ConsumerRing` implementations.
     - `windows_stubs`: Stateful simulator for non-Linux development.
 
-### `crates/fluxnet-proto` (The Protocol Layer)
+### `crates/fluxcapacitor-proto` (The Protocol Layer)
 - **Role:** Zero-copy protocol views and parsers.
 - **Support:** Ethernet, IPv4, UDP, TCP, and ICMP.
 - **Feature:** Includes checksum validation and `adjust_head` for zero-copy header manipulation.
 
-### `crates/fluxnet-ebpf` (The Kernel Hook)
+### `crates/fluxcapacitor-ebpf` (The Kernel Hook)
 - **Role:** XDP program that redirects incoming packets from the kernel to AF_XDP sockets using an `XskMap`.
 
 ---
 
 ## 2. Architectural Modes
 
-Fluxnet provides three distinct ways to interact with the network:
+fluxcapacitor provides three distinct ways to interact with the network:
 
 | Mode | Name | API Style | Best For |
 | :--- | :--- | :--- | :--- |
@@ -87,34 +87,34 @@ Created by `split(FluxRaw)`.
 
 ## 5. Cross-Platform Development (Simulator)
 
-Fluxnet is designed to be developed on **Windows/macOS** using the **Simulator**:
-- **Backend:** `fluxnet-core/src/windows_stubs.rs` mocks the kernel state in a global `SOCKETS` mutex.
+fluxcapacitor is designed to be developed on **Windows/macOS** using the **Simulator**:
+- **Backend:** `fluxcapacitor-core/src/windows_stubs.rs` mocks the kernel state in a global `SOCKETS` mutex.
 - **Rings:** Mapped to `Box<[u8]>` with stable pointers to mimic `mmap`.
-- **Injection:** `fluxnet::simulator::control` allows tests to manually inject packets into mock RX rings and read from mock TX rings.
+- **Injection:** `fluxcapacitor::simulator::control` allows tests to manually inject packets into mock RX rings and read from mock TX rings.
 
 ---
 
 ## 6. Development & Test Commands
 
 ### Core Development
-- **Check Build:** `cargo check -p fluxnet`
-- **Verify eBPF:** `cargo check -p fluxnet-ebpf`
+- **Check Build:** `cargo check -p fluxcapacitor`
+- **Verify eBPF:** `cargo check -p fluxcapacitor-ebpf`
 - **Build Docs:** `cargo doc --no-deps`
 
 ### Testing (Simulator)
 Most development happens using the simulator feature:
 ```bash
-cargo test -p fluxnet --features "simulator async"
+cargo test -p fluxcapacitor --features "simulator async"
 ```
 
 ### Protocol Tests
 ```bash
-cargo test -p fluxnet-proto
+cargo test -p fluxcapacitor-proto
 ```
 
 ## 7. Instructional Context for Gemini
 
-- **Safety:** Always encapsulate `unsafe` in `fluxnet-core`. Public APIs in `fluxnet` should be safe.
+- **Safety:** Always encapsulate `unsafe` in `fluxcapacitor-core`. Public APIs in `fluxcapacitor` should be safe.
 - **Performance:** Avoid heap allocations or `Vec<u8>` in the hot path. Use `PacketRef::data_mut()` for in-place modification.
 - **Endianness:** Always use `.to_be()`/`from_be()` or `from_be_bytes()` when dealing with protocol headers.
 - **Async:** When using `AsyncFluxRx`, remember it yields to the executor if the ring is empty.

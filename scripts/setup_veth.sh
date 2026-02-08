@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# Setup veth pair for Fluxnet loopback test
+# Setup veth pair for Fluxcapacitor loopback test
 # Use sudo to run this
 
 if [ "$EUID" -ne 0 ]; then

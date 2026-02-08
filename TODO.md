@@ -1,6 +1,6 @@
-# Fluxnet Production Readiness TODO
+# fluxcapacitor Production Readiness TODO
 
-This document outlines the remaining work required to bring `fluxnet` from its current prototype state to a production-ready crate.
+This document outlines the remaining work required to bring `fluxcapacitor` from its current prototype state to a production-ready crate.
 
 ## ✅ Completed (P0: Critical Correctness)
 
@@ -12,7 +12,7 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 
 - [x] **Windows Simulator for Testing**:
     -   Upgrade `windows_stubs.rs` to stateful mocks (simulating kernel rings and UMEM).
-    -   Add `fluxnet::simulator` module (test-only) to inject/inspect packets.
+    -   Add `fluxcapacitor::simulator` module (test-only) to inject/inspect packets.
     -   Enable functional `FluxEngine` tests on Windows.
 - [x] **Poller Implementation**:
     -   Implement the `Adaptive` polling strategy in `FluxEngine::run`.
@@ -30,7 +30,7 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 ## 2. Protocol Support (P2)
 
 - [x] **L4 Protocols**:
-    -   Implement `UdpHeader` and `TcpHeader` parsing/serializing in `fluxnet-proto`.
+    -   Implement `UdpHeader` and `TcpHeader` parsing/serializing in `fluxcapacitor-proto`.
     -   Add `checksum()` validation methods.
 - [x] **ICMP Support**:
     -   Add basic ICMP parsing for ping/traceroute utilities.
@@ -40,7 +40,7 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 ## 3. Testing & Verification (P3)
 
 - [x] **Integration Tests (Linux Required)**:
-    -   `loopback_test`: Use `veth` pairs to send packets from `fluxnet` to kernel and back.
+    -   `loopback_test`: Use `veth` pairs to send packets from `fluxcapacitor` to kernel and back.
     -   `fuzz_engine`: Flood `FluxEngine` with random data to test stability.
 - [x] **Unit Tests**:
     -   Test `PacketBatch` iterator logic (empty batch, full batch, wrap-around).
@@ -53,8 +53,8 @@ This document outlines the remaining work required to bring `fluxnet` from its c
     -   Create `examples/load_balancer_system.rs` (Mode B).
     -   Create `examples/manual_packet_pump.rs` (Mode C).
 - [ ] **Rustdocs**:
-    -   Add doc comments to all public APIs in `fluxnet`.
-    -   Include "Safety" sections for all `unsafe` functions in `fluxnet-core`.
+    -   Add doc comments to all public APIs in `fluxcapacitor`.
+    -   Include "Safety" sections for all `unsafe` functions in `fluxcapacitor-core`.
 
 ## 5. Performance Optimization (P4)
 

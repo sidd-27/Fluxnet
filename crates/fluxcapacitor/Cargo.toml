@@ -1,0 +1,20 @@
+[package]
+name = "fluxcapacitor"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+simulator = []
+async = ["tokio"]
+
+[dependencies]
+fluxcapacitor-core = { path = "../fluxcapacitor-core" }
+fluxcapacitor-proto = { path = "../fluxcapacitor-proto" }
+thiserror = "2.0.18"
+crossbeam-queue = "0.3"
+lazy_static = "1.4.0"
+tokio = { version = "1.43.0", features = ["full"], optional = true }
+
+[dev-dependencies]
+tokio = { version = "1.43.0", features = ["full"] }

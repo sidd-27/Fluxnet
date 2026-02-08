@@ -1,12 +1,12 @@
-# LLM Context & Developer Guide for Fluxnet
+# LLM Context & Developer Guide for Fluxcapacitor
 
-This document provides comprehensive context for AI assistants and developers working on the `Fluxnet` project. It covers architectural decisions, project structure, build instructions (including Windows simulation), and current development status.
+This document provides comprehensive context for AI assistants and developers working on the `fluxcapacitor` project. It covers architectural decisions, project structure, build instructions (including Windows simulation), and current development status.
 
 ---
 
 ## 1. Project Overview
 
-**Fluxnet** is a high-performance, idiomatic Rust library for Linux AF_XDP (XDP sockets). It aims to provide raw packet I/O performance comparable to DPDK but with safe Rust abstractions.
+**Fluxcapacitor** is a high-performance, idiomatic Rust library for Linux AF_XDP (XDP sockets). It aims to provide raw packet I/O performance comparable to DPDK but with safe Rust abstractions.
 
 ### Core Goals
 1.  **Safety**: Safe abstractions over unsafe `mmap` regions and raw pointers.
@@ -19,7 +19,7 @@ This document provides comprehensive context for AI assistants and developers wo
 
 The workspace is split into three crates:
 
-### A. `crates/fluxnet-core` (The Engine Room)
+### A. `crates/fluxcapacitor-core` (The Engine Room)
 -   **Role**: Handles low-level, unsafe system interaction.
 -   **Key Components**:
     -   `sys`: Raw FFI bindings to kernel structures (xdp_desc, setsockopt, mmap).
@@ -27,7 +27,7 @@ The workspace is split into three crates:
     -   `ring`: Type-safe wrappers around `ProducerRing` and `ConsumerRing` (circular buffers).
     -   **Windows Stubs**: When compiled on non-Linux, this crate provides a **Simulator Layer**. It mocks kernel rings and UMEM in memory (`lazy_static` HashMap), allowing functional testing of the upper layers without a Linux kernel.
 
-### B. `crates/fluxnet` (The User Interface)
+### B. `crates/fluxcapacitor` (The User Interface)
 -   **Role**: Safe, high-level API for network applications.
 -   **Key Interactions**:
     -   **FluxRaw**: A handle to the raw socket and rings. Explicitly `Send` to allow passing between threads.
@@ -37,7 +37,7 @@ The workspace is split into three crates:
         -   `PacketRef` (Zero-Copy): Used in the `FluxEngine` callback API. Direct reference to UMEM data, valid only during the callback.
     -   **FluxBuilder**: Fluent builder pattern for creating generic AF_XDP sockets.
 
-### C. `crates/fluxnet-ebpf` (The Kernel Hook)
+### C. `crates/fluxcapacitor-ebpf` (The Kernel Hook)
 -   **Role**: The eBPF program running in the kernel XDP hook.
 -   **Function**: Redirects packets to the specific AF_XDP socket map (`xsks_map`).
 -   **Build**: Compiled via `aya-bpf`.
@@ -49,10 +49,10 @@ The workspace is split into three crates:
 ### A. Windows Development (The Simulator)
 Since AF_XDP is Linux-specific, we use a **Simulator** for local development on Windows.
 
--   **Mechanism**: `fluxnet-core/src/windows_stubs.rs` implements a stateful mock of the kernel. It allocates memory for rings and UMEM on the heap and keys them by a "fake" file descriptor.
+-   **Mechanism**: `fluxcapacitor-core/src/windows_stubs.rs` implements a stateful mock of the kernel. It allocates memory for rings and UMEM on the heap and keys them by a "fake" file descriptor.
 -   **Running Tests**: You MUST enable the `simulator` feature.
     ```bash
-    cargo test -p fluxnet --features simulator
+    cargo test -p fluxcapacitor --features simulator
     ```
 -   **Key Test**: `tests/simulated_traffic.rs`. This test spins up a `FluxEngine`, injects fake packets into the mock RX ring, and verifies that the engine processes them and echoes them back to the TX ring.
 
@@ -98,11 +98,11 @@ Since AF_XDP is Linux-specific, we use a **Simulator** for local development on 
 
 **Run Simulator Tests (Windows):**
 ```bash
-cargo test -p fluxnet --features simulator -- --nocapture
+cargo test -p fluxcapacitor --features simulator -- --nocapture
 ```
 
 **Check Compilation:**
 ```bash
 cargo check
-cargo check -p fluxnet-ebpf
+cargo check -p fluxcapacitor-ebpf
 ```

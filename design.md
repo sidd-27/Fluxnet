@@ -22,14 +22,14 @@ We will use a **Cargo Workspace** to separate the "Unsafe Engine" from the "Safe
 
 
 ```
-fluxnet/
+fluxcapacitor/
 ├── Cargo.toml                          # Workspace definition
 ├── README.md                           # Architecture diagrams
 ├── xtask/                              # Build automation (eBPF compilation)
 │
 ├── crates/
 │   │
-│   ├── fluxnet-core/                   # (INTERNAL) The Hardware Abstraction Layer
+│   ├── fluxcapacitor-core/                   # (INTERNAL) The Hardware Abstraction Layer
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── sys/                    # OS & FFI Boundaries
@@ -49,7 +49,7 @@ fluxnet/
 │   │       │
 │   │       └── lib.rs                  # Exports `XskContext` for internal use
 │   │
-│   ├── fluxnet-proto/                  # (SHARED) Zero-Copy Protocol Parsers
+│   ├── fluxcapacitor-proto/                  # (SHARED) Zero-Copy Protocol Parsers
 │   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── view.rs                 # Trait: `PacketView` (BigEndian reads)
@@ -60,7 +60,7 @@ fluxnet/
 │   │       ├── tcp.rs
 │   │       └── lib.rs
 │   │
-│   └── fluxnet/                        # (PUBLIC) The Developer API
+│   └── fluxcapacitor/                        # (PUBLIC) The Developer API
 │       ├── Cargo.toml
 │       └── src/
 │           ├── builder.rs              # The Common Entry Point
@@ -106,7 +106,7 @@ This is where the performance lives. We avoid objects that own data (`Vec<u8>`).
 
 #### **A. The UMEM Arena (The Memory Pool)**
 
-Located in `fluxnet-core/src/umem.rs`.
+Located in `fluxcapacitor-core/src/umem.rs`.
 
 
 ``` rust
@@ -126,7 +126,7 @@ pub struct Umem {
 
 #### **B. The Ring Buffers (Producer/Consumer)**
 
-Located in `fluxnet-core/src/ring.rs`. The kernel and user-space communicate purely by updating integer counters (`producer_idx` and `consumer_idx`).
+Located in `fluxcapacitor-core/src/ring.rs`. The kernel and user-space communicate purely by updating integer counters (`producer_idx` and `consumer_idx`).
 
 
 ``` rust
@@ -156,7 +156,7 @@ This is how we enforce safety without the user knowing they are touching raw mem
 
 #### **The `Packet` Struct (Zero-Copy View)**
 
-Located in `fluxnet/src/packet.rs`. This struct does not hold the data. It holds a **pointer** to the data inside the UMEM.
+Located in `fluxcapacitor/src/packet.rs`. This struct does not hold the data. It holds a **pointer** to the data inside the UMEM.
 
 
 ``` rust
@@ -256,7 +256,7 @@ where F: FnMut(Packet) -> Action
 
 ### **6. Safety & Security Strategy**
 
-- **Boundary:** The `fluxnet-core` crate contains all the `unsafe` code. The `fluxnet` crate contains _zero_ unsafe code in the public API.
+- **Boundary:** The `fluxcapacitor-core` crate contains all the `unsafe` code. The `fluxcapacitor` crate contains _zero_ unsafe code in the public API.
     
 - **Lifetime Pinning:** The `Packet<'a>` lifetime ensures no one can access the UMEM region after the frame has been submitted back to the kernel.
     
@@ -267,15 +267,15 @@ We use the **Builder Pattern** for setup and a **Closure-based Event Loop** for 
 
 ---
 
-Here is the revised **FluxNet Design and Architecture Document**, structured to clearly distinguish the two usage modes: **The Engine** (High Throughput) and **The System** (Fine-Grained Control).
+Here is the revised **fluxcapacitor Design and Architecture Document**, structured to clearly distinguish the two usage modes: **The Engine** (High Throughput) and **The System** (Fine-Grained Control).
 
 ---
 
-# FluxNet: Architecture & Design Document
+# Fluxcapacitor: Architecture & Design Document
 
 ## 1. Architectural Strategy & Implementation
 
-FluxNet is designed as a dual-mode network library. It shares a common hardware abstraction layer but offers two distinct runtime models depending on user needs: **speed vs. control**.
+fluxcapacitor is designed as a dual-mode network library. It shares a common hardware abstraction layer but offers two distinct runtime models depending on user needs: **speed vs. control**.
 
 ### 1.1 Shared Foundation (The Core)
 
@@ -359,7 +359,7 @@ A fluent builder pattern used to configure the engine before the hot loop starts
 Rust
 
 ``` rust
-use fluxnet::{FluxBuilder, Poller};
+use fluxcapacitor::{FluxBuilder, Poller};
 
 fn main() -> Result<(), FluxError> {
     let engine = FluxBuilder::new("eth0")

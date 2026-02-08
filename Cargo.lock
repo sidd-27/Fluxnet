@@ -247,19 +247,19 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluxnet"
+name = "fluxcapacitor"
 version = "0.1.0"
 dependencies = [
  "crossbeam-queue",
- "fluxnet-core",
- "fluxnet-proto",
+ "fluxcapacitor-core",
+ "fluxcapacitor-proto",
  "lazy_static",
  "thiserror 2.0.18",
  "tokio",
 ]
 
 [[package]]
-name = "fluxnet-core"
+name = "fluxcapacitor-core"
 version = "0.1.0"
 dependencies = [
  "aya",
@@ -270,7 +270,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluxnet-ebpf"
+name = "fluxcapacitor-ebpf"
 version = "0.1.0"
 dependencies = [
  "aya-ebpf",
@@ -278,7 +278,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fluxnet-proto"
+name = "fluxcapacitor-proto"
 version = "0.1.0"
 
 [[package]]
