@@ -17,6 +17,7 @@ pub struct FluxBuilder {
     frame_size: u32,
     poller: Poller,
     batch_size: usize,
+    bind_flags: u16,
 }
 
 impl FluxBuilder {
@@ -28,11 +29,17 @@ impl FluxBuilder {
             frame_size: 2048,
             poller: Poller::Adaptive,
             batch_size: 64,
+            bind_flags: 0,
         }
     }
 
     pub fn queue_id(mut self, id: u32) -> Self {
         self.queue_id = id;
+        self
+    }
+    
+    pub fn bind_flags(mut self, flags: u16) -> Self {
+        self.bind_flags = flags;
         self
     }
     
@@ -132,7 +139,7 @@ impl FluxBuilder {
         // 6. Bind (if interface provided)
         let if_index = fluxnet_core::sys::utils::if_nametoindex(&self.interface)?;
         
-        bind_socket(fd, if_index, self.queue_id, false)?;
+        bind_socket(fd, if_index, self.queue_id, self.bind_flags)?;
  
         Ok(FluxRaw::new(
             umem, 

@@ -32,11 +32,23 @@ impl<T: Copy> ProducerRing<T> {
     }
 
     #[inline]
+    pub fn available(&self) -> u32 {
+        let producer_idx = unsafe { (*self.producer).load(Ordering::Relaxed) };
+        let consumer_idx = unsafe { (*self.consumer).load(Ordering::Acquire) };
+        self.size - (producer_idx.wrapping_sub(consumer_idx))
+    }
+
+    #[inline]
+    pub fn len(&self) -> u32 {
+        self.size
+    }
+
+    #[inline]
     pub fn reserve(&mut self, count: u32) -> Option<u32> {
         let producer_idx = unsafe { (*self.producer).load(Ordering::Relaxed) };
         let consumer_idx = unsafe { (*self.consumer).load(Ordering::Acquire) };
         
-        let available = self.size - (producer_idx - consumer_idx);
+        let available = self.size - (producer_idx.wrapping_sub(consumer_idx));
         
         if available < count {
             return None;

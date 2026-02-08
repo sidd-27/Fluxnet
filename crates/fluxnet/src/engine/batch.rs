@@ -67,3 +67,62 @@ impl<'a> Iterator for BatchIterator<'a> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use fluxnet_core::umem::layout::UmemLayout;
+    use fluxnet_core::umem::mmap::UmemRegion;
+
+    #[test]
+    fn test_packet_batch_iteration() {
+        // 1. Setup Umem
+        let layout = UmemLayout::new(2048, 16);
+        let mut umem = UmemRegion::new(layout).expect("Failed to create umem");
+        
+        // 2. Setup Descriptors
+        // We'll create 3 descriptors
+        let mut descriptors = vec![
+            XDPDesc { addr: 0, len: 100, options: 0 },
+            XDPDesc { addr: 2048, len: 50, options: 0 },
+            XDPDesc { addr: 4096, len: 200, options: 0 },
+        ];
+
+        // 3. Setup Actions
+        let mut actions = vec![Action::Drop; 3];
+
+        // 4. Create Batch
+        let mut batch = PacketBatch::new(&mut descriptors, &mut umem, &mut actions);
+
+        // 5. Verify Iteration
+        let mut count = 0;
+        for (i, packet) in batch.iter_mut().enumerate() {
+            count += 1;
+            // Verify packet properties match descriptor
+            let expected_len = match i {
+                0 => 100,
+                1 => 50,
+                2 => 200,
+                _ => 0,
+            };
+            assert_eq!(packet.len(), expected_len);
+        }
+        assert_eq!(count, 3);
+        
+        // Verify actions were reset to Drop
+        for action in actions {
+            assert_eq!(action, Action::Drop);
+        }
+    }
+
+    #[test]
+    fn test_empty_batch() {
+        let layout = UmemLayout::new(2048, 16);
+        let mut umem = UmemRegion::new(layout).expect("Failed to create umem");
+        let mut descriptors = vec![];
+        let mut actions = vec![];
+
+        let mut batch = PacketBatch::new(&mut descriptors, &mut umem, &mut actions);
+        assert_eq!(batch.iter_mut().count(), 0);
+    }
+}
+

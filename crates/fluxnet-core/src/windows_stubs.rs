@@ -65,7 +65,7 @@ pub mod sys {
             Ok(fd as RawHandle)
         }
         
-        pub fn bind_socket(fd: RawFd, ifindex: u32, queue_id: u32, _shared: bool) -> io::Result<()> {
+        pub fn bind_socket(fd: RawFd, ifindex: u32, queue_id: u32, _bind_flags: u16) -> io::Result<()> {
             let fd_idx = fd as usize;
             let mut sockets = SOCKETS.lock().unwrap();
             if let Some(sock) = sockets.get_mut(&fd_idx) {
@@ -303,7 +303,12 @@ pub mod ring {
         pub fn submit(&mut self, idx: u32) {
             unsafe { *self.producer = idx };
         }
-        pub fn available(&self) -> usize { 1024 }
+        pub fn available(&self) -> usize { 
+            let prod = unsafe { *self.producer };
+            let cons = unsafe { *self.consumer };
+            (self.size - prod.wrapping_sub(cons)) as usize
+        }
+        pub fn len(&self) -> usize { self.size as usize }
     }
     
     pub struct ConsumerRing<T> {
@@ -343,6 +348,12 @@ pub mod ring {
         pub fn consumer_idx(&self) -> u32 { 
              unsafe { *self.consumer }
         }
+        pub fn available(&self) -> usize {
+            let prod = unsafe { *self.producer };
+            let cons = unsafe { *self.consumer };
+            prod.wrapping_sub(cons) as usize
+        }
+        pub fn len(&self) -> usize { self.size as usize }
     }
 }
 

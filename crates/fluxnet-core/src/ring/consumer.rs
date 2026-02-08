@@ -32,11 +32,23 @@ impl<T: Copy> ConsumerRing<T> {
     }
 
     #[inline]
+    pub fn available(&self) -> u32 {
+        let producer_idx = unsafe { (*self.producer).load(Ordering::Acquire) };
+        let consumer_idx = unsafe { (*self.consumer).load(Ordering::Relaxed) };
+        producer_idx.wrapping_sub(consumer_idx)
+    }
+
+    #[inline]
+    pub fn len(&self) -> u32 {
+        self.size
+    }
+
+    #[inline]
     pub fn peek(&mut self, count: u32) -> usize {
         let producer_idx = unsafe { (*self.producer).load(Ordering::Acquire) };
         let consumer_idx = unsafe { (*self.consumer).load(Ordering::Relaxed) };
         
-        let available = producer_idx - consumer_idx;
+        let available = producer_idx.wrapping_sub(consumer_idx);
         if available == 0 {
              return 0;
         }
@@ -47,7 +59,7 @@ impl<T: Copy> ConsumerRing<T> {
     #[inline]
     pub fn release(&mut self, count: u32) {
         let current = unsafe { (*self.consumer).load(Ordering::Relaxed) };
-         unsafe { (*self.consumer).store(current + count, Ordering::Release) };
+         unsafe { (*self.consumer).store(current.wrapping_add(count), Ordering::Release) };
     }
 
     #[inline]

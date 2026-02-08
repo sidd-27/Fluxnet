@@ -23,7 +23,7 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 - [x] **RSS / Multi-Queue Support**:
     -   Verify `FluxBuilder::queue_id` correctly binds to specific hardware queues.
     -   Add support for configuring RSS (Receive Side Scaling) via eBPF maps if needed.
-- [ ] **FluxRaw "Bare Metal" Mode**:
+- [x] **FluxRaw "Bare Metal" Mode**:
     -   Expose `FluxRaw` public module with documented "Safety Guardrails".
     -   Add `debug_rings()` helper for inspecting ring state.
 
@@ -39,10 +39,10 @@ This document outlines the remaining work required to bring `fluxnet` from its c
 
 ## 3. Testing & Verification (P3)
 
-- [ ] **Integration Tests (Linux Required)**:
+- [x] **Integration Tests (Linux Required)**:
     -   `loopback_test`: Use `veth` pairs to send packets from `fluxnet` to kernel and back.
     -   `fuzz_engine`: Flood `FluxEngine` with random data to test stability.
-- [ ] **Unit Tests**:
+- [x] **Unit Tests**:
     -   Test `PacketBatch` iterator logic (empty batch, full batch, wrap-around).
     -   Test Ring arithmetic (producer/consumer pointer wrapping).
 

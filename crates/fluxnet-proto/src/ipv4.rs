@@ -22,6 +22,18 @@ impl Ipv4Header {
         self.ver_ihl & 0x0F
     }
     
+    pub fn total_len(&self) -> u16 {
+        u16::from_be(self.total_len)
+    }
+
+    pub fn src(&self) -> u32 {
+        u32::from_be(self.src)
+    }
+
+    pub fn dst(&self) -> u32 {
+        u32::from_be(self.dst)
+    }
+
     pub fn header_len(&self) -> usize {
         (self.ihl() as usize) * 4
     }
@@ -42,6 +54,10 @@ pub fn parse_ipv4(data: &[u8]) -> Option<(&Ipv4Header, &[u8])> {
     let ptr = data.as_ptr() as *const Ipv4Header;
     let header = unsafe { &*ptr };
     
+    if header.version() != 4 {
+        return None;
+    }
+
     let header_len = header.header_len();
     if data.len() < header_len {
         return None;

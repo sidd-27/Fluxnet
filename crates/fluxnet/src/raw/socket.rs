@@ -45,7 +45,10 @@ impl FluxRaw {
     }
     
     pub fn wakeup_rx(&self) -> std::io::Result<()> {
-        // TODO: syscall
+        #[cfg(target_os = "linux")]
+        {
+             let _ = fluxnet_core::sys::socket::wait_rx(self.fd, 0)?;
+        }
         Ok(())
     }
     
@@ -55,8 +58,17 @@ impl FluxRaw {
     }
     
     pub fn wakeup_tx(&self) -> std::io::Result<()> {
-        // TODO: syscall
+        #[cfg(target_os = "linux")]
+        fluxnet_core::sys::socket::kick_tx(self.fd)?;
         Ok(())
+    }
+
+    pub fn debug_rings(&self) {
+        println!("--- FluxRaw Ring Debug ---");
+        println!("RX Ring:   {}/{}", self.rx.available(), self.rx.len());
+        println!("TX Ring:   {}/{}", self.tx.available(), self.tx.len());
+        println!("Fill Ring: {}/{}", self.fill.available(), self.fill.len());
+        println!("Comp Ring: {}/{}", self.comp.available(), self.comp.len());
     }
 }
 
